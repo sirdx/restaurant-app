@@ -1,5 +1,9 @@
-FROM openjdk:21
-MAINTAINER sirdx
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} ms_reservation.jar
-ENTRYPOINT ["java", "-jar", "ms_reservation.jar"]
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+COPY src ./src
+
+CMD ["./mvnw", "spring-boot:run"]

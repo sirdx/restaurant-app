@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ReservationConfirmationDto(
-        UUID reservationId,
+        UUID id,
         TableResponseDto table,
         CustomerResponseDto customer,
         Instant startTimestamp,

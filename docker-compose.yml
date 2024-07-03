@@ -1,20 +1,48 @@
 services:
-  postgres:
-    container_name: ms_pg_sql
+  customer-postgres:
+    container_name: ms-customer-postgres
     image: postgres
     environment:
       POSTGRES_USER: siitp
       POSTGRES_PASSWORD: 20232024
+      POSTGRES_DB: customer
       PGDATA: /var/lib/postgresql/data
+      PGPORT: 5432
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres_customer:/var/lib/postgresql/data
     ports:
       - 5432:5432
-    networks:
-      - microservices-net
+    restart: unless-stopped
+  table-postgres:
+    container_name: ms-table-postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: siitp
+      POSTGRES_PASSWORD: 20232024
+      POSTGRES_DB: restaurant_table
+      PGDATA: /var/lib/postgresql/data
+      PGPORT: 5433
+    volumes:
+      - postgres_table:/var/lib/postgresql/data
+    ports:
+      - 5433:5433
+    restart: unless-stopped
+  reservation-postgres:
+    container_name: ms-reservation-postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: siitp
+      POSTGRES_PASSWORD: 20232024
+      POSTGRES_DB: reservation
+      PGDATA: /var/lib/postgresql/data
+      PGPORT: 5434
+    volumes:
+      - postgres_reservation:/var/lib/postgresql/data
+    ports:
+      - 5434:5434
     restart: unless-stopped
   pgadmin:
-    container_name: ms_pgadmin
+    container_name: ms-pgadmin
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
@@ -24,17 +52,15 @@ services:
       - pgadmin:/var/lib/pgadmin
     ports:
       - 5050:80
-    networks:
-      - microservices-net
     restart: unless-stopped
   mail-dev:
-    container_name: ms_mail_dev
+    container_name: ms-mail-dev
     image: maildev/maildev
     ports:
       - 1080:1080
       - 1025:1025
   zookeeper:
-    container_name: ms_zookeeper
+    container_name: ms-zookeeper
     image: confluentinc/cp-zookeeper:latest
     environment:
       ZOOKEEPER_SERVER_ID: 1
@@ -42,10 +68,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
-    networks:
-      - microservices-net
   kafka:
-    container_name: ms_kafka
+    container_name: ms-kafka
     image: confluentinc/cp-kafka:latest
     ports:
       - 9092:9092
@@ -57,21 +81,76 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-    networks:
-      - microservices-net
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://ms-kafka:9092
   zipkin:
-    container_name: ms_zipkin
+    container_name: ms-zipkin
     image: openzipkin/zipkin
     ports:
       - 9411:9411
-    networks:
-      - microservices-net
-
-networks:
-  microservices-net:
-    driver: bridge
+  config-server:
+    container_name: ms-config-server
+    build: config-server
+    ports:
+      - 8888:8888
+  discovery:
+    container_name: ms-discovery
+    build: discovery
+    ports:
+      - 8761:8761
+    depends_on:
+      - config-server
+  customer:
+    container_name: ms-customer
+    build: customer
+    ports:
+      - 8090:8090
+    depends_on:
+      - discovery
+      - customer-postgres
+  notification:
+    container_name: ms-notification
+    build: notification
+    ports:
+      - 8040:8040
+    depends_on:
+      - discovery
+      - kafka
+      - zookeeper
+  reservation:
+    container_name: ms-reservation
+    build: reservation
+    ports:
+      - 8070:8070
+    depends_on:
+      - discovery
+      - reservation-postgres
+      - kafka
+      - zookeeper
+      - customer
+      - table
+  table:
+    container_name: ms-table
+    build: table
+    ports:
+      - 8050:8050
+    depends_on:
+      - discovery
+      - table-postgres
+  gateway:
+    container_name: ms-gateway
+    build: gateway
+    ports:
+      - 8222:8222
+    depends_on:
+      - config-server
+      - discovery
+      - customer
+      - notification
+      - reservation
+      - table
 
 volumes:
-  postgres:
+  postgres_customer:
+  postgres_table:
+  postgres_reservation:
   pgadmin:
