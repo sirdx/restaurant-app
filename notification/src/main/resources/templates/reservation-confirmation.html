@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reservation Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Reservation Confirmation</h1>
+    <p>Dear <span th:text="${customerName}"></span>,</p>
+    <p>Thank you for your reservation. Here are the details:</p>
+    <ul>
+        <li><strong>Reservation ID:</strong> <span th:text="${reservationId}"></span></li>
+        <li><strong>Table Location:</strong> <span th:text="${tableLocation}"></span></li>
+        <li><strong>Table Description:</strong> <span th:text="${tableDescription}"></span></li>
+        <li><strong>Number of Seats:</strong> <span th:text="${tableSeats}"></span></li>
+        <li><strong>Start Timestamp:</strong> <span th:text="${startTimestamp}"></span></li>
+        <li><strong>End Timestamp:</strong> <span th:text="${endTimestamp}"></span></li>
+    </ul>
+    <p>We look forward to serving you!</p>
+    <p>Best regards,</p>
+    <p>Your Restaurant Team</p>
+    <div class="footer">
+        <p>If you have any questions, please contact us at support@restaurant.com.</p>
+    </div>
+</div>
+</body>
+</html>
