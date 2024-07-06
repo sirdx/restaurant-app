@@ -1,48 +1,40 @@
 services:
-  customer-postgres:
-    container_name: ms-customer-postgres
+  restaurant:
+    container_name: restaurant_api
+    build:
+      context: .
+    environment:
+      - POSTGRES_USER=siitp
+      - POSTGRES_PASSWORD=20232024
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/restaurant
+      - SPRING_DATASOURCE_USERNAME=siitp
+      - SPRING_DATASOURCE_PASSWORD=20232024
+      - SPRING_MAIL_HOST=mail_dev
+      - SPRING_MAIL_PORT=1025
+      - SPRING_MAIL_USERNAME=siitp
+      - SPRING_MAIL_PASSWORD=20232024
+    depends_on:
+      - postgres
+    ports:
+      - 8080:8080
+    networks:
+      - restaurant-net
+  postgres:
+    container_name: postgres
     image: postgres
     environment:
       POSTGRES_USER: siitp
       POSTGRES_PASSWORD: 20232024
-      POSTGRES_DB: customer
       PGDATA: /var/lib/postgresql/data
-      PGPORT: 5432
     volumes:
-      - postgres_customer:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - restaurant-net
     ports:
       - 5432:5432
     restart: unless-stopped
-  table-postgres:
-    container_name: ms-table-postgres
-    image: postgres
-    environment:
-      POSTGRES_USER: siitp
-      POSTGRES_PASSWORD: 20232024
-      POSTGRES_DB: restaurant_table
-      PGDATA: /var/lib/postgresql/data
-      PGPORT: 5433
-    volumes:
-      - postgres_table:/var/lib/postgresql/data
-    ports:
-      - 5433:5433
-    restart: unless-stopped
-  reservation-postgres:
-    container_name: ms-reservation-postgres
-    image: postgres
-    environment:
-      POSTGRES_USER: siitp
-      POSTGRES_PASSWORD: 20232024
-      POSTGRES_DB: reservation
-      PGDATA: /var/lib/postgresql/data
-      PGPORT: 5434
-    volumes:
-      - postgres_reservation:/var/lib/postgresql/data
-    ports:
-      - 5434:5434
-    restart: unless-stopped
   pgadmin:
-    container_name: ms-pgadmin
+    container_name: pgadmin
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
@@ -50,107 +42,26 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin:/var/lib/pgadmin
+    depends_on:
+      - postgres
     ports:
       - 5050:80
+    networks:
+      - restaurant-net
     restart: unless-stopped
   mail-dev:
-    container_name: ms-mail-dev
+    container_name: mail_dev
     image: maildev/maildev
     ports:
       - 1080:1080
       - 1025:1025
-  zookeeper:
-    container_name: ms-zookeeper
-    image: confluentinc/cp-zookeeper:latest
-    environment:
-      ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - 22181:2181
-  kafka:
-    container_name: ms-kafka
-    image: confluentinc/cp-kafka:latest
-    ports:
-      - 9092:9092
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://ms-kafka:9092
-  zipkin:
-    container_name: ms-zipkin
-    image: openzipkin/zipkin
-    ports:
-      - 9411:9411
-  config-server:
-    container_name: ms-config-server
-    build: config-server
-    ports:
-      - 8888:8888
-  discovery:
-    container_name: ms-discovery
-    build: discovery
-    ports:
-      - 8761:8761
-    depends_on:
-      - config-server
-  customer:
-    container_name: ms-customer
-    build: customer
-    ports:
-      - 8090:8090
-    depends_on:
-      - discovery
-      - customer-postgres
-  notification:
-    container_name: ms-notification
-    build: notification
-    ports:
-      - 8040:8040
-    depends_on:
-      - discovery
-      - kafka
-      - zookeeper
-  reservation:
-    container_name: ms-reservation
-    build: reservation
-    ports:
-      - 8070:8070
-    depends_on:
-      - discovery
-      - reservation-postgres
-      - kafka
-      - zookeeper
-      - customer
-      - table
-  table:
-    container_name: ms-table
-    build: table
-    ports:
-      - 8050:8050
-    depends_on:
-      - discovery
-      - table-postgres
-  gateway:
-    container_name: ms-gateway
-    build: gateway
-    ports:
-      - 8222:8222
-    depends_on:
-      - config-server
-      - discovery
-      - customer
-      - notification
-      - reservation
-      - table
+    networks:
+      - restaurant-net
+
+networks:
+  restaurant-net:
+    driver: bridge
 
 volumes:
-  postgres_customer:
-  postgres_table:
-  postgres_reservation:
+  postgres:
   pgadmin:
